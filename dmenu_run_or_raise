@@ -1,0 +1,31 @@
+#!/bin/sh
+
+type wmctrl >/dev/null 2>&1 || { echo "wmctrl command missing"; exit 1; }
+type dmenu  >/dev/null 2>&1 || { echo "dmenu command missing"; exit 1; }
+type pidof  >/dev/null 2>&1 || { echo "pidof command missing"; exit 1; }
+
+cachedir=${XDG_CACHE_HOME:-"$HOME/.cache"}
+if [ -d "$cachedir" ]; then
+	cache=$cachedir/dmenu_run
+else
+	cache=$HOME/.dmenu_cache # if no xdg dir, fall back to dotfile in ~
+fi
+
+OLDIFS="$IFS" ; IFS=:
+if stest -dqr -n "$cache" $PATH; then
+  run=$(stest -flx $PATH | sort -u | tee "$cache" | dmenu "$@")
+else
+  run=$(dmenu "$@" < "$cache")
+fi
+IFS="$OLDIFS"
+
+run_pid=$(pidof -s "$run")
+if [ -n "$run_pid" ]; then
+  wmid=$(
+    wmctrl -l -p | while read id w p etc; do
+      [ "$p" = "$run_pid" ] && { echo "$id"; break; }
+    done
+  )
+  [ -n "$wmid" ] && { wmctrl -i -a "$wmid"; exit 0; }
+fi
+echo "$run" | ${SHELL:-"/bin/sh"} &
