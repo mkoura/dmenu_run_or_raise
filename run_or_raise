@@ -24,25 +24,28 @@ dmenu_run() {
 run_or_raise() {
   run="$1"
   run_pid=$(pidof -s "$run")
+  wmid=''
   if [ -n "$run_pid" ]; then
     wmid=$(
       wmctrl -l -p | while read id w p etc; do
         [ "$p" = "$run_pid" ] && { echo "$id"; break; }
       done
     )
-  [ -n "$wmid" ] && { wmctrl -i -a "$wmid"; exit 0; }
   fi
-  echo "$run" | ${SHELL:-"/bin/sh"} &
+  if [ -n "$wmid" ]; then
+    wmctrl -i -a "$wmid"
+  else
+    echo "$@" | ${SHELL:-"/bin/sh"} &
+  fi
 }
 
 case "$1" in
   -c )
-    run="$2"
-    shift; shift
+    shift
+    [ "$#" -ge 1 ] && run_or_raise "$@"
     ;;
   *)
     run="$(dmenu_run $@)"
+    [ -n "$run" ] && run_or_raise "$run"
     ;;
 esac
-
-[ -n "$run" ] && run_or_raise "$run"
