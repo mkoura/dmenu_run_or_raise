@@ -1,4 +1,4 @@
-dmenu_run_or_raise
+Moved to https://gitlab.com/mkourim/dmenu_run_or_raise
 ==================
 
 Application launcher same as `dmenu_run` (shipped with `dmenu`), except that it switches to window
